@@ -202,6 +202,12 @@ client.on(Events.InteractionCreate, async (it) => {
 
 client.once(Events.ClientReady, async (c) => {
   console.log(`Bot conectado como ${c.user.tag}`);
+  if (!c.guilds.cache.has(GUILD_ID)) {
+    console.error(`GUILD_ID incorrecto (${GUILD_ID}). El bot está en estos servidores:`);
+    c.guilds.cache.forEach((s) => console.error(`  -> ${s.name}: ${s.id}`));
+    if (!c.guilds.cache.size) console.error('  (ninguno: invita al bot con el link de OAuth2)');
+    return;
+  }
   const g = guild();
   console.log(`Cargando miembros de "${g.name}"...`);
   await g.members.fetch();
