@@ -1,0 +1,19 @@
+{
+  "name": "dreamers-roles",
+  "version": "1.0.0",
+  "description": "Bot + panel web para dar roles temporales en Discord (Dreamers Academy)",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.5.0",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1"
+  }
+}

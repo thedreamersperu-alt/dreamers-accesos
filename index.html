@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dreamers · Accesos Discord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --font: 'Montserrat', system-ui, sans-serif;   /* cambia aquí por la tipografía de tu web */
+    --bg:#05070d; --panel:#0b1020; --panel-2:#0f1730; --line:#1b2648;
+    --blue:#1f6bff; --blue-2:#4d8bff; --blue-soft:rgba(31,107,255,.14);
+    --text:#f4f6fb; --muted:#8b97b8; --ok:#22c55e; --warn:#f5a524; --bad:#ef4444;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);color:var(--text);background:var(--bg);min-height:100vh;
+    background-image:linear-gradient(rgba(31,107,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(31,107,255,.07) 1px,transparent 1px);
+    background-size:44px 44px;}
+  button,input,select{font:inherit;color:inherit}
+  .hidden{display:none!important}
+  .wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px}
+
+  /* login */
+  .login{min-height:100vh;display:grid;place-items:center;padding:16px}
+  .login .card{width:100%;max-width:380px;padding:32px}
+  .brand{font-weight:800;letter-spacing:.14em;font-size:13px;color:var(--blue-2)}
+  h1{margin:6px 0 20px;font-size:26px;font-weight:800}
+  h2{margin:0 0 4px;font-size:16px;font-weight:700}
+  .card{background:linear-gradient(180deg,var(--panel),#080c18);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+  input[type=text],input[type=password],input[type=search],input[type=datetime-local],input[type=number]{
+    width:100%;background:#060a16;border:1px solid var(--line);border-radius:10px;padding:11px 12px;outline:none}
+  input:focus{border-color:var(--blue)}
+  input[type=datetime-local]{color-scheme:dark}
+  .btn{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap}
+  .btn:hover{border-color:var(--blue)}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.primary:hover{background:var(--blue-2)}
+  .btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+  .btn.sm{padding:6px 10px;font-size:12px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .err{color:var(--bad);font-size:13px;min-height:18px;margin-top:10px}
+
+  /* header */
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  header .guild{display:flex;align-items:center;gap:10px}
+  header img{width:38px;height:38px;border-radius:10px;background:var(--panel-2)}
+  header .title{font-weight:800;font-size:18px}
+  .stats{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 14px;min-width:110px}
+  .stat b{display:block;font-size:20px}
+  .stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+  .tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tab{background:none;border:0;padding:11px 16px;cursor:pointer;color:var(--muted);font-weight:600;border-bottom:2px solid transparent}
+  .tab.on{color:var(--text);border-color:var(--blue)}
+
+  /* dar acceso */
+  .grid3{display:grid;grid-template-columns:1.15fr 1fr .9fr;gap:14px}
+  @media (max-width:1000px){.grid3{grid-template-columns:1fr}}
+  .step{font-size:11px;font-weight:800;color:var(--blue-2);letter-spacing:.1em}
+  .list{margin-top:10px;max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer}
+  .row:last-child{border-bottom:0}
+  .row:hover{background:var(--panel-2)}
+  .row.sel{background:var(--blue-soft)}
+  .row.dis{opacity:.45;cursor:not-allowed}
+  .row img{width:28px;height:28px;border-radius:50%}
+  .row .n{font-weight:600;font-size:14px}
+  .row .u{color:var(--muted);font-size:12px}
+  .row .grow{flex:1;min-width:0}
+  .row .grow>*{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--muted);flex:none;display:grid;place-items:center}
+  .sel .check{background:var(--blue);border-color:var(--blue)}
+  .sel .check::after{content:'';width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none;background:#99a}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .muted{color:var(--muted);font-size:12px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{background:var(--blue-soft);border:1px solid rgba(31,107,255,.35);border-radius:999px;padding:4px 6px 4px 10px;font-size:12px;display:inline-flex;align-items:center;gap:6px}
+  .chip button{background:none;border:0;cursor:pointer;color:var(--muted);padding:0 4px;font-size:14px;line-height:1}
+  .chip.pack{cursor:pointer;padding:5px 12px}
+  .chip.pack:hover{border-color:var(--blue-2)}
+  .presets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+  .preset{padding:10px 6px;text-align:center}
+  .preset.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  label.lbl{display:block;font-size:12px;color:var(--muted);margin:12px 0 6px}
+  .summary{background:#060a16;border:1px dashed var(--line);border-radius:10px;padding:12px;font-size:13px;margin:14px 0;line-height:1.6}
+  .summary b{color:var(--blue-2)}
+
+  /* tablas */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;background:#080c18;position:sticky;top:0}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--panel-2);border:1px solid var(--line)}
+  .soon{color:var(--warn)} .late{color:var(--bad)} .okc{color:var(--ok)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .filters{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .filters input{max-width:320px}
+
+  .toast{position:fixed;right:16px;bottom:16px;max-width:420px;background:var(--panel-2);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:12px;padding:14px 16px;font-size:13px;box-shadow:0 10px 40px rgba(0,0,0,.5);z-index:50;white-space:pre-line}
+  .toast.bad{border-left-color:var(--bad)}
+  dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:var(--r);padding:20px;width:min(380px,92vw)}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="login hidden">
+  <form class="card" id="loginForm">
+    <div class="brand">DREAMERS ACADEMY</div>
+    <h1>Panel de accesos</h1>
+    <input type="password" id="pw" placeholder="Contraseña" autocomplete="current-password" required>
+    <button class="btn primary" style="width:100%;margin-top:12px;padding:12px">Entrar</button>
+    <div class="err" id="loginErr"></div>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="app" class="wrap hidden">
+  <header>
+    <div class="guild">
+      <img id="gIcon" alt="">
+      <div><div class="brand">DREAMERS · ACCESOS</div><div class="title" id="gName">…</div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sActive">–</b><span>Accesos activos</span></div>
+      <div class="stat"><b id="sStudents">–</b><span>Alumnos</span></div>
+      <div class="stat"><b id="sExp" class="soon">–</b><span>Vencen en 7 días</span></div>
+    </div>
+    <button class="btn sm" id="logout">Salir</button>
+  </header>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="give">Dar acceso</button>
+    <button class="tab" data-tab="active">Accesos activos</button>
+    <button class="tab" data-tab="history">Historial</button>
+  </div>
+
+  <!-- DAR ACCESO -->
+  <section id="tab-give">
+    <div class="grid3">
+      <div class="card">
+        <div class="step">PASO 1</div>
+        <h2>Alumnos</h2>
+        <p class="sub" id="memberCount">Busca por nombre, usuario o ID</p>
+        <input type="search" id="mq" placeholder="Buscar alumno…">
+        <div class="toolbar">
+          <button class="btn sm" id="selAllMembers">Seleccionar resultados</button>
+          <button class="btn sm" id="clearMembers">Limpiar</button>
+        </div>
+        <div class="chips" id="memberChips"></div>
+        <div class="list" id="memberList"></div>
+      </div>
+
+      <div class="card">
+        <div class="step">PASO 2</div>
+        <h2>Roles</h2>
+        <p class="sub">Elige uno, varios o todos</p>
+        <div class="chips" id="packs"></div>
+        <div class="toolbar">
+          <button class="btn sm" id="selAllRoles">Todos los roles</button>
+          <button class="btn sm" id="clearRoles">Ninguno</button>
+          <button class="btn sm" id="savePack">Guardar como paquete</button>
+        </div>
+        <div class="list" id="roleList"></div>
+      </div>
+
+      <div class="card">
+        <div class="step">PASO 3</div>
+        <h2>Plazo de acceso</h2>
+        <p class="sub">Al vencer, el bot quita los roles solo</p>
+        <div class="presets" id="presets"></div>
+        <label class="lbl">O una fecha exacta</label>
+        <input type="datetime-local" id="customDate">
+        <label class="lbl">Nota (opcional)</label>
+        <input type="text" id="note" placeholder="Ej. Pago Roadmap mensual">
+        <div class="summary" id="summary"></div>
+        <button class="btn primary" style="width:100%;padding:13px" id="giveBtn">Dar acceso</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTIVOS -->
+  <section id="tab-active" class="hidden">
+    <div class="filters">
+      <input type="search" id="aq" placeholder="Filtrar por alumno o rol…">
+      <button class="btn" id="reloadActive">Actualizar</button>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Alumno</th><th>Rol</th><th>Otorgado</th><th>Vence</th><th>Nota</th><th>Acciones</th></tr></thead>
+      <tbody id="activeBody"></tbody>
+    </table></div>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section id="tab-history" class="hidden">
+    <div class="filters"><input type="search" id="hq" placeholder="Filtrar…"></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Alumno</th><th>Rol</th><th>Otorgado</th><th>Terminó</th><th>Estado</th><th>Nota</th></tr></thead>
+      <tbody id="historyBody"></tbody>
+    </table></div>
+  </section>
+</div>
+
+<dialog id="dateDlg">
+  <h2>Cambiar vencimiento</h2>
+  <p class="sub" id="dateDlgInfo"></p>
+  <input type="datetime-local" id="dateDlgInput">
+  <div class="toolbar" style="justify-content:flex-end;margin-top:16px">
+    <button class="btn" value="cancel" id="dateDlgCancel">Cancelar</button>
+    <button class="btn" id="dateDlgNoExp">Sin vencimiento</button>
+    <button class="btn primary" id="dateDlgOk">Guardar</button>
+  </div>
+</dialog>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DAY = 864e5;
+
+async function api(path, opts = {}) {
+  const r = await fetch('/api' + path, {
+    method: opts.method || 'GET',
+    headers: opts.body ? { 'Content-Type': 'application/json' } : {},
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && path !== '/login') { showLogin(); throw new Error('Sesión expirada'); }
+  if (!r.ok) throw new Error(data.error || 'Error');
+  return data;
+}
+
+let toastT;
+function toast(msg, bad) {
+  document.querySelector('.toast')?.remove();
+  const t = document.createElement('div');
+  t.className = 'toast' + (bad ? ' bad' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.remove(), bad ? 8000 : 5000);
+}
+
+const fmt = (ms) => ms ? new Date(ms).toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+function rel(ms) {
+  if (!ms) return '';
+  const d = ms - Date.now(), a = Math.abs(d);
+  const v = a >= DAY ? Math.round(a / DAY) + ' d' : a >= 36e5 ? Math.round(a / 36e5) + ' h' : Math.max(1, Math.round(a / 6e4)) + ' min';
+  return d >= 0 ? 'en ' + v : 'hace ' + v;
+}
+const toLocalInput = (ms) => { const d = new Date(ms - new Date().getTimezoneOffset() * 6e4); return d.toISOString().slice(0, 16); };
+
+/* ---------- Estado ---------- */
+const S = { members: new Map(), selMembers: new Map(), roles: [], selRoles: new Set(), packs: [], preset: 30, results: [] };
+const PRESETS = [[7,'7 días'],[15,'15 días'],[30,'30 días'],[60,'60 días'],[90,'90 días'],[180,'6 meses'],[365,'1 año'],[0,'Sin vencer'],[-1,'Fecha exacta']];
+
+/* ---------- Login ---------- */
+function showLogin() { $('#app').classList.add('hidden'); $('#login').classList.remove('hidden'); $('#pw').focus(); }
+$('#loginForm').onsubmit = async (e) => {
+  e.preventDefault(); $('#loginErr').textContent = '';
+  try { await api('/login', { method: 'POST', body: { password: $('#pw').value } }); $('#pw').value = ''; boot(); }
+  catch (err) { $('#loginErr').textContent = err.message; }
+};
+$('#logout').onclick = async () => { await api('/logout', { method: 'POST' }).catch(() => {}); showLogin(); };
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === b));
+  ['give', 'active', 'history'].forEach((t) => $('#tab-' + t).classList.toggle('hidden', t !== b.dataset.tab));
+  if (b.dataset.tab === 'active') loadActive();
+  if (b.dataset.tab === 'history') loadHistory();
+});
+
+/* ---------- Alumnos ---------- */
+let searchT;
+$('#mq').oninput = () => { clearTimeout(searchT); searchT = setTimeout(searchMembers, 250); };
+async function searchMembers() {
+  const { results, total } = await api('/members?q=' + encodeURIComponent($('#mq').value));
+  S.results = results;
+  results.forEach((m) => S.members.set(m.id, m));
+  $('#memberCount').textContent = `${total} miembros en el servidor · ${results.length} mostrados`;
+  renderMembers();
+}
+function renderMembers() {
+  $('#memberList').innerHTML = S.results.length ? S.results.map((m) => `
+    <div class="row ${S.selMembers.has(m.id) ? 'sel' : ''}" data-id="${m.id}">
+      <span class="check"></span><img src="${esc(m.avatar)}" alt="">
+      <div class="grow"><div class="n">${esc(m.name)}</div><div class="u">@${esc(m.username)}</div></div>
+    </div>`).join('') : '<div class="row muted">Sin resultados</div>';
+  $('#memberList').querySelectorAll('.row[data-id]').forEach((r) => r.onclick = () => {
+    const m = S.members.get(r.dataset.id);
+    S.selMembers.has(m.id) ? S.selMembers.delete(m.id) : S.selMembers.set(m.id, m);
+    renderMembers(); renderSummary();
+  });
+  $('#memberChips').innerHTML = [...S.selMembers.values()].map((m) =>
+    `<span class="chip">${esc(m.name)}<button data-id="${m.id}" title="Quitar">×</button></span>`).join('');
+  $('#memberChips').querySelectorAll('button').forEach((b) => b.onclick = () => { S.selMembers.delete(b.dataset.id); renderMembers(); renderSummary(); });
+}
+$('#selAllMembers').onclick = () => { S.results.forEach((m) => S.selMembers.set(m.id, m)); renderMembers(); renderSummary(); };
+$('#clearMembers').onclick = () => { S.selMembers.clear(); renderMembers(); renderSummary(); };
+
+/* ---------- Roles ---------- */
+async function loadRoles() { S.roles = await api('/roles'); renderRoles(); }
+function renderRoles() {
+  $('#roleList').innerHTML = S.roles.map((r) => `
+    <div class="row ${S.selRoles.has(r.id) ? 'sel' : ''} ${r.assignable ? '' : 'dis'}" data-id="${r.id}"
+      title="${r.assignable ? '' : 'El bot no puede gestionar este rol (súbelo por encima en Ajustes > Roles)'}">
+      <span class="check"></span><span class="dot" style="${r.color ? 'background:' + r.color : ''}"></span>
+      <div class="grow"><div class="n">${esc(r.name)}</div></div><span class="u">${r.members}</span>
+    </div>`).join('');
+  $('#roleList').querySelectorAll('.row:not(.dis)').forEach((row) => row.onclick = () => {
+    S.selRoles.has(row.dataset.id) ? S.selRoles.delete(row.dataset.id) : S.selRoles.add(row.dataset.id);
+    renderRoles(); renderSummary();
+  });
+}
+$('#selAllRoles').onclick = () => { S.roles.filter((r) => r.assignable).forEach((r) => S.selRoles.add(r.id)); renderRoles(); renderSummary(); };
+$('#clearRoles').onclick = () => { S.selRoles.clear(); renderRoles(); renderSummary(); };
+
+/* ---------- Paquetes (ej. Gold, Platinum, Centurion) ---------- */
+async function loadPacks() { S.packs = await api('/packs'); renderPacks(); }
+function renderPacks() {
+  $('#packs').innerHTML = S.packs.map((p) =>
+    `<span class="chip pack" data-id="${p.id}">★ ${esc(p.name)}${p.days ? ' · ' + p.days + 'd' : ''}<button data-del="${p.id}" title="Borrar paquete">×</button></span>`).join('');
+  $('#packs').querySelectorAll('.pack').forEach((c) => c.onclick = (e) => {
+    if (e.target.dataset.del) return;
+    const p = S.packs.find((x) => x.id == c.dataset.id);
+    S.selRoles = new Set(p.role_ids.filter((id) => S.roles.some((r) => r.id === id && r.assignable)));
+    if (p.days) setPreset(p.days);
+    renderRoles(); renderSummary();
+  });
+  $('#packs').querySelectorAll('[data-del]').forEach((b) => b.onclick = async () => {
+    if (!confirm('¿Borrar este paquete?')) return;
+    await api('/packs/' + b.dataset.del, { method: 'DELETE' }); loadPacks();
+  });
+}
+$('#savePack').onclick = async () => {
+  if (!S.selRoles.size) return toast('Selecciona roles primero', true);
+  const name = prompt('Nombre del paquete (ej. Gold, Platinum, Centurion):');
+  if (!name) return;
+  const days = S.preset > 0 ? S.preset : null;
+  try { await api('/packs', { method: 'POST', body: { name, roleIds: [...S.selRoles], days } }); toast('Paquete guardado'); loadPacks(); }
+  catch (e) { toast(e.message, true); }
+};
+
+/* ---------- Plazo ---------- */
+function setPreset(v) {
+  S.preset = PRESETS.some(([d]) => d === v) ? v : -1;
+  if (S.preset === -1 && v > 0) $('#customDate').value = toLocalInput(Date.now() + v * DAY);
+  renderPresets(); renderSummary();
+}
+function renderPresets() {
+  $('#presets').innerHTML = PRESETS.map(([d, l]) => `<button class="btn preset ${S.preset === d ? 'on' : ''}" data-d="${d}">${l}</button>`).join('');
+  $('#presets').querySelectorAll('button').forEach((b) => b.onclick = () => {
+    S.preset = Number(b.dataset.d);
+    if (S.preset === -1 && !$('#customDate').value) $('#customDate').value = toLocalInput(Date.now() + 30 * DAY);
+    renderPresets(); renderSummary();
+  });
+}
+$('#customDate').oninput = () => { S.preset = -1; renderPresets(); renderSummary(); };
+function expiresAt() {
+  if (S.preset === 0) return null;
+  if (S.preset === -1) { const v = $('#customDate').value; return v ? new Date(v).getTime() : NaN; }
+  return Date.now() + S.preset * DAY;
+}
+function renderSummary() {
+  const exp = expiresAt();
+  const roles = S.roles.filter((r) => S.selRoles.has(r.id)).map((r) => r.name);
+  $('#summary').innerHTML = `
+    <div><b>${S.selMembers.size}</b> alumno(s)</div>
+    <div><b>${roles.length}</b> rol(es)${roles.length ? ': ' + esc(roles.slice(0, 6).join(', ')) + (roles.length > 6 ? '…' : '') : ''}</div>
+    <div>Vence: <b>${exp === null ? 'nunca' : Number.isNaN(exp) ? 'elige fecha' : fmt(exp)}</b></div>`;
+  $('#giveBtn').disabled = !S.selMembers.size || !S.selRoles.size || Number.isNaN(exp);
+}
+$('#giveBtn').onclick = async () => {
+  const btn = $('#giveBtn'); btn.disabled = true; btn.textContent = 'Asignando…';
+  try {
+    const { results } = await api('/grants', { method: 'POST', body: {
+      userIds: [...S.selMembers.keys()], roleIds: [...S.selRoles], expiresAt: expiresAt(), note: $('#note').value.trim() } });
+    const ok = results.filter((r) => r.ok), bad = results.filter((r) => !r.ok);
+    const ren = ok.reduce((s, r) => s + r.renewed, 0);
+    let msg = `✅ Acceso dado a ${ok.length} alumno(s)` + (ren ? ` · ${ren} acceso(s) existente(s) renovado(s)` : '');
+    if (bad.length) msg += `\n⚠️ Fallaron ${bad.length}:\n` + bad.map((b) => `• ${S.members.get(b.userId)?.name || b.userId}: ${b.error}`).join('\n');
+    toast(msg, bad.length && !ok.length);
+    if (ok.length) { ok.forEach((r) => S.selMembers.delete(r.userId)); $('#note').value = ''; renderMembers(); }
+    refreshStatus();
+  } catch (e) { toast(e.message, true); }
+  finally { btn.textContent = 'Dar acceso'; renderSummary(); }
+};
+
+/* ---------- Activos ---------- */
+let activeRows = [];
+async function loadActive() { activeRows = await api('/grants'); renderActive(); }
+$('#aq').oninput = renderActive;
+$('#reloadActive').onclick = loadActive;
+function renderActive() {
+  const t = $('#aq').value.toLowerCase();
+  const rows = activeRows.filter((g) => !t || (g.user_name + ' ' + g.role_name + ' ' + g.user_id).toLowerCase().includes(t));
+  $('#activeBody').innerHTML = rows.length ? rows.map((g) => {
+    const left = g.expires_at ? g.expires_at - Date.now() : Infinity;
+    const cls = left < DAY ? 'late' : left < 3 * DAY ? 'soon' : 'okc';
+    return `<tr>
+      <td><b>${esc(g.user_name)}</b><div class="muted">${g.user_id}</div></td>
+      <td><span class="badge">${esc(g.role_name)}</span></td>
+      <td>${fmt(g.granted_at)}</td>
+      <td>${g.expires_at ? `${fmt(g.expires_at)}<div class="${cls}" style="font-size:12px;font-weight:600">${rel(g.expires_at)}</div>` : '<span class="okc">Sin vencimiento</span>'}
+        ${g.last_error ? `<div class="late" style="font-size:11px">⚠ ${esc(g.last_error)}</div>` : ''}</td>
+      <td class="muted">${esc(g.note || '')}</td>
+      <td><div class="acts">
+        <button class="btn sm" data-add="${g.id}" data-days="7">+7 d</button>
+        <button class="btn sm" data-add="${g.id}" data-days="30">+30 d</button>
+        <button class="btn sm" data-edit="${g.id}">Fecha</button>
+        <button class="btn sm danger" data-rev="${g.id}">Quitar ya</button>
+      </div></td></tr>`;
+  }).join('') : '<tr><td colspan="6" class="muted">No hay accesos activos</td></tr>';
+
+  $('#activeBody').querySelectorAll('[data-add]').forEach((b) => b.onclick = async () => {
+    try { await api('/grants/' + b.dataset.add, { method: 'PATCH', body: { addDays: Number(b.dataset.days) } }); toast('Acceso extendido'); loadActive(); refreshStatus(); }
+    catch (e) { toast(e.message, true); }
+  });
+  $('#activeBody').querySelectorAll('[data-rev]').forEach((b) => b.onclick = async () => {
+    const g = activeRows.find((x) => x.id == b.dataset.rev);
+    if (!confirm(`¿Quitar "${g.role_name}" a ${g.user_name} ahora?`)) return;
+    try { await api('/grants/' + g.id, { method: 'DELETE' }); toast('Rol retirado'); loadActive(); refreshStatus(); }
+    catch (e) { toast(e.message, true); }
+  });
+  $('#activeBody').querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => openDateDlg(activeRows.find((x) => x.id == b.dataset.edit)));
+}
+
+let dlgGrant;
+function openDateDlg(g) {
+  dlgGrant = g;
+  $('#dateDlgInfo').textContent = `${g.user_name} · ${g.role_name}`;
+  $('#dateDlgInput').value = toLocalInput(g.expires_at || Date.now() + 30 * DAY);
+  $('#dateDlg').showModal();
+}
+async function saveDlg(expiresAt) {
+  try { await api('/grants/' + dlgGrant.id, { method: 'PATCH', body: { expiresAt } }); $('#dateDlg').close(); toast('Vencimiento actualizado'); loadActive(); refreshStatus(); }
+  catch (e) { toast(e.message, true); }
+}
+$('#dateDlgOk').onclick = () => saveDlg(new Date($('#dateDlgInput').value).getTime());
+$('#dateDlgNoExp').onclick = () => saveDlg(null);
+$('#dateDlgCancel').onclick = () => $('#dateDlg').close();
+
+/* ---------- Historial ---------- */
+let historyRows = [];
+async function loadHistory() { historyRows = await api('/grants?status=history'); renderHistory(); }
+$('#hq').oninput = renderHistory;
+function renderHistory() {
+  const t = $('#hq').value.toLowerCase();
+  const rows = historyRows.filter((g) => !t || (g.user_name + ' ' + g.role_name).toLowerCase().includes(t));
+  $('#historyBody').innerHTML = rows.length ? rows.map((g) => `<tr>
+    <td><b>${esc(g.user_name)}</b></td><td><span class="badge">${esc(g.role_name)}</span></td>
+    <td>${fmt(g.granted_at)}</td><td>${fmt(g.ended_at)}</td>
+    <td>${g.status === 'expired' ? '<span class="soon">Venció</span>' : '<span class="late">Revocado</span>'}</td>
+    <td class="muted">${esc(g.note || '')}</td></tr>`).join('') : '<tr><td colspan="6" class="muted">Sin historial</td></tr>';
+}
+
+/* ---------- Arranque ---------- */
+async function refreshStatus() {
+  const s = await api('/status');
+  $('#gName').textContent = s.guild; if (s.icon) $('#gIcon').src = s.icon;
+  $('#sActive').textContent = s.stats.active || 0;
+  $('#sStudents').textContent = s.stats.students || 0;
+  $('#sExp').textContent = s.stats.expiring || 0;
+}
+async function boot() {
+  try {
+    await refreshStatus();
+  } catch (e) {
+    if (e.message === 'Sesión expirada') return;
+    $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
+    toast(e.message + ' Reintentando…', true); return setTimeout(boot, 4000);
+  }
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
+  renderPresets();
+  await Promise.all([loadRoles(), loadPacks(), searchMembers()]);
+  renderSummary();
+}
+boot();
+setInterval(() => { if (!$('#app').classList.contains('hidden')) refreshStatus().catch(() => {}); }, 60000);
+</script>
+</body>
+</html>
