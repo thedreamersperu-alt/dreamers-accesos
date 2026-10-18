@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Bot + panel web para dar roles temporales en Discord (Dreamers Academy)",
   "type": "module",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node index.js"
   },
   "engines": {
     "node": ">=18.17"
