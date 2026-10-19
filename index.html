@@ -107,7 +107,8 @@
   .tgl:hover{border-color:var(--blue)}
   .tgl.open{transform:rotate(90deg);background:var(--blue);color:#fff;border-color:var(--blue)}
   .tgl-sp{width:26px;flex:none}
-  .more{font-size:12px;color:var(--blue-2);cursor:pointer;font-weight:600;margin-left:4px}
+  .more{font-size:12px;color:var(--blue-2);cursor:pointer;font-weight:600;margin-left:4px;padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .more:hover{background:var(--blue-soft)}
   tr.sub td{background:#080c18;font-size:12px}
   tr.sub .badge{font-size:11px}
   .stat-btn{text-align:left;cursor:pointer;font:inherit;color:inherit}
@@ -448,9 +449,8 @@ function renderActive() {
     const errs = list.map((g) => g.last_error).filter(Boolean)[0];
     let html = `<tr class="grp">
       <td><div class="who">
-        ${multi ? `<button class="tgl ${open ? 'open' : ''}" data-tgl="${uid}" title="${open ? 'Ocultar' : 'Ver'} todos los roles">▸</button>` : '<span class="tgl-sp"></span>'}
         <div><b>${esc(first.user_name)}</b><div class="muted">${uid}</div>${isSoon(soonest) ? '<span class="pv">🔔 POR VENCER</span>' : ''}</div></div></td>
-      <td><span class="badge">${esc(first.role_name)}</span>${multi ? ` <span class="more" data-tgl="${uid}">+${list.length - 1} más</span>` : ''}</td>
+      <td><span class="badge">${esc(first.role_name)}</span>${multi ? ` <span class="more" data-tgl="${uid}">${open ? 'Ocultar ▴' : `+${list.length - 1} más ▾`}</span>` : ''}</td>
       <td>${fmt(Math.min(...list.map((g) => g.granted_at)))}</td>
       <td>${expCell(soonest, errs)}</td>
       <td class="muted">${esc(first.note || '')}</td>
