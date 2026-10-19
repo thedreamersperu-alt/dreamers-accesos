@@ -69,7 +69,8 @@ const wrap = (fn) => (req, res) =>
 
 app.get('/api/status', wrap((req, res) => {
   const g = bot.guild();
-  res.json({ guild: g.name, icon: g.iconURL({ size: 64 }), stats: db.stats() });
+  const days = Number(process.env.REMINDER_DAYS) || 3;
+  res.json({ guild: g.name, icon: g.iconURL({ size: 64 }), stats: db.stats(days), reminderDays: days });
 }));
 
 app.get('/api/members', wrap((req, res) => res.json(bot.searchMembers(req.query.q || '', 60))));

@@ -102,6 +102,20 @@
   .filters{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
   .filters input{max-width:320px}
 
+  .who{display:flex;align-items:center;gap:10px}
+  .tgl{width:26px;height:26px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--panel-2);color:var(--blue-2);cursor:pointer;font-size:12px;transition:transform .15s}
+  .tgl:hover{border-color:var(--blue)}
+  .tgl.open{transform:rotate(90deg);background:var(--blue);color:#fff;border-color:var(--blue)}
+  .tgl-sp{width:26px;flex:none}
+  .more{font-size:12px;color:var(--blue-2);cursor:pointer;font-weight:600;margin-left:4px}
+  tr.sub td{background:#080c18;font-size:12px}
+  tr.sub .badge{font-size:11px}
+  .stat-btn{text-align:left;cursor:pointer;font:inherit;color:inherit}
+  .stat-btn:hover{border-color:var(--warn)}
+  .stat-btn.alert{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn),0 0 18px rgba(245,165,36,.25);animation:pulse 2s infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 1px var(--warn),0 0 4px rgba(245,165,36,.1)}}
+  .btn.on{background:var(--warn);border-color:var(--warn);color:#111}
+  .pv{display:inline-block;margin-top:3px;font-size:10px;font-weight:800;letter-spacing:.04em;color:#111;background:var(--warn);border-radius:999px;padding:2px 7px}
   .toast{position:fixed;right:16px;bottom:16px;max-width:420px;background:var(--panel-2);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:12px;padding:14px 16px;font-size:13px;box-shadow:0 10px 40px rgba(0,0,0,.5);z-index:50;white-space:pre-line}
   .toast.bad{border-left-color:var(--bad)}
   dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:var(--r);padding:20px;width:min(380px,92vw)}
@@ -131,7 +145,6 @@
     <div class="stats">
       <div class="stat"><b id="sActive">–</b><span>Accesos activos</span></div>
       <div class="stat"><b id="sStudents">–</b><span>Alumnos</span></div>
-      <div class="stat"><b id="sExp" class="soon">–</b><span>Vencen en 7 días</span></div>
     </div>
     <button class="btn sm" id="logout">Salir</button>
   </header>
@@ -190,6 +203,7 @@
   <section id="tab-active" class="hidden">
     <div class="filters">
       <input type="search" id="aq" placeholder="Filtrar por alumno o rol…">
+      <button class="btn" id="soonBtn">🔔 Solo por vencer</button>
       <button class="btn" id="reloadActive">Actualizar</button>
     </div>
     <div class="tablewrap"><table>
@@ -393,55 +407,102 @@ $('#giveBtn').onclick = async () => {
   finally { btn.textContent = 'Dar acceso'; renderSummary(); }
 };
 
-/* ---------- Activos ---------- */
+/* ---------- Activos (agrupados por alumno) ---------- */
 let activeRows = [];
+const openUsers = new Set();
+let soonOnly = false, REM_DAYS = 3;
+const isSoon = (exp) => exp && exp - Date.now() <= REM_DAYS * DAY;
+$('#soonBtn').onclick = () => { soonOnly = !soonOnly; $('#soonBtn').classList.toggle('on', soonOnly); renderActive(); };
 async function loadActive() { activeRows = await api('/grants'); renderActive(); }
 $('#aq').oninput = renderActive;
 $('#reloadActive').onclick = loadActive;
+
+function expCell(exp, errs) {
+  const left = exp ? exp - Date.now() : Infinity;
+  const cls = left < DAY ? 'late' : left < 3 * DAY ? 'soon' : 'okc';
+  return (exp ? `${fmt(exp)}<div class="${cls}" style="font-size:12px;font-weight:600">${rel(exp)}</div>` : '<span class="okc">Sin vencimiento</span>')
+    + (errs ? `<div class="late" style="font-size:11px">⚠ ${esc(errs)}</div>` : '');
+}
+function actBtns(ids, all) {
+  const d = ids.join(',');
+  return `<div class="acts">
+    <button class="btn sm" data-add="${d}" data-days="7">+7 d</button>
+    <button class="btn sm" data-add="${d}" data-days="30">+30 d</button>
+    <button class="btn sm" data-edit="${d}">Fecha</button>
+    <button class="btn sm danger" data-rev="${d}">Quitar acceso</button>
+  </div>`;
+}
+
 function renderActive() {
   const t = $('#aq').value.toLowerCase();
   const rows = activeRows.filter((g) => !t || (g.user_name + ' ' + g.role_name + ' ' + g.user_id).toLowerCase().includes(t));
-  $('#activeBody').innerHTML = rows.length ? rows.map((g) => {
-    const left = g.expires_at ? g.expires_at - Date.now() : Infinity;
-    const cls = left < DAY ? 'late' : left < 3 * DAY ? 'soon' : 'okc';
-    return `<tr>
-      <td><b>${esc(g.user_name)}</b><div class="muted">${g.user_id}</div></td>
-      <td><span class="badge">${esc(g.role_name)}</span></td>
-      <td>${fmt(g.granted_at)}</td>
-      <td>${g.expires_at ? `${fmt(g.expires_at)}<div class="${cls}" style="font-size:12px;font-weight:600">${rel(g.expires_at)}</div>` : '<span class="okc">Sin vencimiento</span>'}
-        ${g.last_error ? `<div class="late" style="font-size:11px">⚠ ${esc(g.last_error)}</div>` : ''}</td>
-      <td class="muted">${esc(g.note || '')}</td>
-      <td><div class="acts">
-        <button class="btn sm" data-add="${g.id}" data-days="7">+7 d</button>
-        <button class="btn sm" data-add="${g.id}" data-days="30">+30 d</button>
-        <button class="btn sm" data-edit="${g.id}">Fecha</button>
-        <button class="btn sm danger" data-rev="${g.id}">Quitar ya</button>
-      </div></td></tr>`;
-  }).join('') : '<tr><td colspan="6" class="muted">No hay accesos activos</td></tr>';
+  const groups = new Map();
+  rows.forEach((g) => groups.set(g.user_id, [...(groups.get(g.user_id) || []), g]));
 
+  const lists = [...groups.values()].map((list) => {
+    const exps = list.map((g) => g.expires_at).filter(Boolean);
+    return { list, soonest: exps.length ? Math.min(...exps) : null };
+  }).filter((x) => !soonOnly || isSoon(x.soonest));
+  $('#activeBody').innerHTML = lists.length ? lists.map(({ list, soonest }) => {
+    const first = list[0], uid = first.user_id, open = openUsers.has(uid), multi = list.length > 1;
+    const errs = list.map((g) => g.last_error).filter(Boolean)[0];
+    let html = `<tr class="grp">
+      <td><div class="who">
+        ${multi ? `<button class="tgl ${open ? 'open' : ''}" data-tgl="${uid}" title="${open ? 'Ocultar' : 'Ver'} todos los roles">▸</button>` : '<span class="tgl-sp"></span>'}
+        <div><b>${esc(first.user_name)}</b><div class="muted">${uid}</div>${isSoon(soonest) ? '<span class="pv">🔔 POR VENCER</span>' : ''}</div></div></td>
+      <td><span class="badge">${esc(first.role_name)}</span>${multi ? ` <span class="more" data-tgl="${uid}">+${list.length - 1} más</span>` : ''}</td>
+      <td>${fmt(Math.min(...list.map((g) => g.granted_at)))}</td>
+      <td>${expCell(soonest, errs)}</td>
+      <td class="muted">${esc(first.note || '')}</td>
+      <td>${actBtns(list.map((g) => g.id), multi)}</td></tr>`;
+    if (multi && open) {
+      html += list.map((g) => `<tr class="sub">
+        <td></td>
+        <td><span class="badge">${esc(g.role_name)}</span></td>
+        <td>${fmt(g.granted_at)}</td>
+        <td>${expCell(g.expires_at, g.last_error)}</td>
+        <td class="muted">${esc(g.note || '')}</td>
+        <td></td></tr>`).join('');
+    }
+    return html;
+  }).join('') : `<tr><td colspan="6" class="muted">${soonOnly ? `Ningún alumno vence en los próximos ${REM_DAYS} días 🎉` : 'No hay accesos activos'}</td></tr>`;
+
+  const idsOf = (b, key) => b.dataset[key].split(',').map(Number);
+  const grantsOf = (ids) => ids.map((id) => activeRows.find((x) => x.id === id)).filter(Boolean);
+
+  $('#activeBody').querySelectorAll('[data-tgl]').forEach((b) => b.onclick = () => {
+    const u = b.dataset.tgl; openUsers.has(u) ? openUsers.delete(u) : openUsers.add(u); renderActive();
+  });
   $('#activeBody').querySelectorAll('[data-add]').forEach((b) => b.onclick = async () => {
-    try { await api('/grants/' + b.dataset.add, { method: 'PATCH', body: { addDays: Number(b.dataset.days) } }); toast('Acceso extendido'); loadActive(); refreshStatus(); }
-    catch (e) { toast(e.message, true); }
+    try {
+      for (const id of idsOf(b, 'add')) await api('/grants/' + id, { method: 'PATCH', body: { addDays: Number(b.dataset.days) } });
+      toast('Acceso extendido'); loadActive(); refreshStatus();
+    } catch (e) { toast(e.message, true); }
   });
   $('#activeBody').querySelectorAll('[data-rev]').forEach((b) => b.onclick = async () => {
-    const g = activeRows.find((x) => x.id == b.dataset.rev);
-    if (!confirm(`¿Quitar "${g.role_name}" a ${g.user_name} ahora?`)) return;
-    try { await api('/grants/' + g.id, { method: 'DELETE' }); toast('Rol retirado'); loadActive(); refreshStatus(); }
-    catch (e) { toast(e.message, true); }
+    const gs = grantsOf(idsOf(b, 'rev'));
+    const msg = gs.length > 1 ? `¿Quitar los ${gs.length} roles a ${gs[0].user_name} ahora?` : `¿Quitar "${gs[0].role_name}" a ${gs[0].user_name} ahora?`;
+    if (!confirm(msg)) return;
+    try {
+      for (const g of gs) await api('/grants/' + g.id, { method: 'DELETE' });
+      toast(gs.length > 1 ? 'Roles retirados' : 'Rol retirado'); loadActive(); refreshStatus();
+    } catch (e) { toast(e.message, true); }
   });
-  $('#activeBody').querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => openDateDlg(activeRows.find((x) => x.id == b.dataset.edit)));
+  $('#activeBody').querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => openDateDlg(grantsOf(idsOf(b, 'edit'))));
 }
 
-let dlgGrant;
-function openDateDlg(g) {
-  dlgGrant = g;
-  $('#dateDlgInfo').textContent = `${g.user_name} · ${g.role_name}`;
-  $('#dateDlgInput').value = toLocalInput(g.expires_at || Date.now() + 30 * DAY);
+let dlgGrants = [];
+function openDateDlg(gs) {
+  dlgGrants = gs;
+  $('#dateDlgInfo').textContent = gs.length > 1 ? `${gs[0].user_name} · ${gs.length} roles` : `${gs[0].user_name} · ${gs[0].role_name}`;
+  $('#dateDlgInput').value = toLocalInput(gs[0].expires_at || Date.now() + 30 * DAY);
   $('#dateDlg').showModal();
 }
 async function saveDlg(expiresAt) {
-  try { await api('/grants/' + dlgGrant.id, { method: 'PATCH', body: { expiresAt } }); $('#dateDlg').close(); toast('Vencimiento actualizado'); loadActive(); refreshStatus(); }
-  catch (e) { toast(e.message, true); }
+  try {
+    for (const g of dlgGrants) await api('/grants/' + g.id, { method: 'PATCH', body: { expiresAt } });
+    $('#dateDlg').close(); toast('Vencimiento actualizado'); loadActive(); refreshStatus();
+  } catch (e) { toast(e.message, true); }
 }
 $('#dateDlgOk').onclick = () => saveDlg(new Date($('#dateDlgInput').value).getTime());
 $('#dateDlgNoExp').onclick = () => saveDlg(null);
@@ -467,7 +528,8 @@ async function refreshStatus() {
   $('#gName').textContent = s.guild; if (s.icon) $('#gIcon').src = s.icon;
   $('#sActive').textContent = s.stats.active || 0;
   $('#sStudents').textContent = s.stats.students || 0;
-  $('#sExp').textContent = s.stats.expiring || 0;
+  REM_DAYS = s.reminderDays || 3;
+
 }
 async function boot() {
   try {

@@ -47,7 +47,7 @@ const q = {
   stats: db.prepare(`SELECT
       SUM(status='active') AS active,
       COUNT(DISTINCT CASE WHEN status='active' THEN user_id END) AS students,
-      SUM(status='active' AND expires_at IS NOT NULL AND expires_at <= ?) AS expiring
+      COUNT(DISTINCT CASE WHEN status='active' AND expires_at IS NOT NULL AND expires_at <= ? THEN user_id END) AS expiring
     FROM grants`),
   packs: db.prepare(`SELECT * FROM packs ORDER BY name`),
   packUpsert: db.prepare(`INSERT INTO packs (name, role_ids, days) VALUES (?,?,?)
@@ -76,7 +76,7 @@ export const markReminded = (id) => q.markReminded.run(id);
 export const activeGrants = () => q.activeList.all();
 export const historyGrants = (limit = 300) => q.history.all(limit);
 export const activeByUser = (userId) => q.activeByUser.all(userId);
-export const stats = () => q.stats.get(Date.now() + 7 * 864e5);
+export const stats = (days = 3) => q.stats.get(Date.now() + days * 864e5);
 
 export const listPacks = () => q.packs.all().map((p) => ({ ...p, role_ids: JSON.parse(p.role_ids) }));
 export const savePack = (name, roleIds, days) => q.packUpsert.run(name, JSON.stringify(roleIds), days ?? null);
