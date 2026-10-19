@@ -144,8 +144,7 @@
       <div><div class="brand">DREAMERS · ACCESOS</div><div class="title" id="gName">…</div></div>
     </div>
     <div class="stats">
-      <div class="stat"><b id="sActive">–</b><span>Accesos activos</span></div>
-      <div class="stat"><b id="sStudents">–</b><span>Alumnos</span></div>
+      <div class="stat"><b id="sStudents">–</b><span>Alumnos activos</span></div>
     </div>
     <button class="btn sm" id="logout">Salir</button>
   </header>
@@ -526,7 +525,6 @@ function renderHistory() {
 async function refreshStatus() {
   const s = await api('/status');
   $('#gName').textContent = s.guild; if (s.icon) $('#gIcon').src = s.icon;
-  $('#sActive').textContent = s.stats.active || 0;
   $('#sStudents').textContent = s.stats.students || 0;
   REM_DAYS = s.reminderDays || 3;
 
