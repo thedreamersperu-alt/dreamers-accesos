@@ -1,12 +1,31 @@
 import {
   Client, GatewayIntentBits, Partials, Events,
-  SlashCommandBuilder, MessageFlags, PermissionFlagsBits,
+  SlashCommandBuilder, MessageFlags, PermissionFlagsBits, ChannelType,
 } from 'discord.js';
 import * as db from './db.js';
 
 const GUILD_ID = process.env.GUILD_ID;
 const REMINDER_DAYS = Number(process.env.REMINDER_DAYS ?? 3);
 const RENEW_TEXT = process.env.RENEW_TEXT || '';
+const AVISOS_CHANNEL_ID = process.env.AVISOS_CHANNEL_ID || '';
+
+/** Si el DM no llega, abre un hilo privado en #avisos y menciona al alumno. */
+async function notifyByThread(userId, userName, body) {
+  if (!AVISOS_CHANNEL_ID) return;
+  try {
+    const channel = await client.channels.fetch(AVISOS_CHANNEL_ID);
+    const thread = await channel.threads.create({
+      name: `Vence tu acceso · ${userName || 'alumno'}`.slice(0, 100),
+      type: ChannelType.PrivateThread,
+      invitable: false,
+      autoArchiveDuration: 10080, // 7 días
+    });
+    await thread.members.add(userId);
+    await thread.send(`<@${userId}> ${body}\n\n_Te escribimos por aquí porque tienes los mensajes privados cerrados. Solo tú y el equipo ven este hilo._`);
+  } catch (e) {
+    console.error('[aviso por hilo]', userId, e?.message);
+  }
+}
 
 export const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
@@ -145,10 +164,14 @@ async function sendReminders() {
 
   for (const [userId, items] of byUser) {
     const lines = items.map((i) => `• **${i.role_name}** vence <t:${Math.floor(i.expires_at / 1000)}:F> (<t:${Math.floor(i.expires_at / 1000)}:R>)`);
+    const body = `Hola 👋 tu acceso en **${guild().name}** está por vencer:\n${lines.join('\n')}\n\n${RENEW_TEXT}`.trim();
     try {
       const user = await client.users.fetch(userId);
-      await user.send(`Hola 👋 tu acceso en **${guild().name}** está por vencer:\n${lines.join('\n')}\n\n${RENEW_TEXT}`.trim());
-    } catch { /* DMs cerrados: se ignora */ }
+      await user.send(body);
+    } catch (e) {
+      // 50007 = el alumno tiene los mensajes privados cerrados → se le avisa por hilo
+      if (e?.code === 50007) await notifyByThread(userId, items[0].user_name, body);
+    }
     items.forEach((i) => db.markReminded(i.id));
   }
 }
