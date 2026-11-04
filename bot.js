@@ -22,6 +22,7 @@ async function notifyByThread(userId, userName, body) {
     });
     await thread.members.add(userId);
     await thread.send(`<@${userId}> ${body}\n\n_Te escribimos por aquí porque tienes los mensajes privados cerrados. Solo tú y el equipo ven este hilo._`);
+    console.log(`[aviso por hilo] hilo creado para ${userName}`);
   } catch (e) {
     console.error('[aviso por hilo]', userId, e?.message);
   }
@@ -168,7 +169,9 @@ async function sendReminders() {
     try {
       const user = await client.users.fetch(userId);
       await user.send(body);
+      console.log(`[aviso] DM enviado a ${items[0].user_name}`);
     } catch (e) {
+      console.log(`[aviso] DM no llegó a ${items[0].user_name} (código ${e?.code}): ${e?.message}`);
       // 50007 = el alumno tiene los mensajes privados cerrados → se le avisa por hilo
       if (e?.code === 50007) await notifyByThread(userId, items[0].user_name, body);
     }
