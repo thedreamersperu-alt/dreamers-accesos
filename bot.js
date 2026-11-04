@@ -172,8 +172,8 @@ async function sendReminders() {
       console.log(`[aviso] DM enviado a ${items[0].user_name}`);
     } catch (e) {
       console.log(`[aviso] DM no llegó a ${items[0].user_name} (código ${e?.code}): ${e?.message}`);
-      // 50007 = el alumno tiene los mensajes privados cerrados → se le avisa por hilo
-      if (e?.code === 50007) await notifyByThread(userId, items[0].user_name, body);
+      // 50007 / 50278 = el alumno tiene los mensajes privados cerrados → se le avisa por hilo
+      if (e?.code === 50007 || e?.code === 50278) await notifyByThread(userId, items[0].user_name, body);
     }
     items.forEach((i) => db.markReminded(i.id));
   }
