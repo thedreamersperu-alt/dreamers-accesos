@@ -3,6 +3,7 @@ import {
   SlashCommandBuilder, MessageFlags, PermissionFlagsBits, ChannelType,
 } from 'discord.js';
 import * as db from './db.js';
+import { setupTeaser, teaserEnabled } from './teaser.js';
 
 const GUILD_ID = process.env.GUILD_ID;
 const REMINDER_DAYS = Number(process.env.REMINDER_DAYS ?? 3);
@@ -29,9 +30,14 @@ async function notifyByThread(userId, userName, body) {
 }
 
 export const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+  intents: [
+    GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers,
+    // Para el aviso VIP: leer los mensajes de Gregory (requiere "Message Content Intent" en el Developer Portal)
+    ...(teaserEnabled ? [GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] : []),
+  ],
   partials: [Partials.GuildMember],
 });
+setupTeaser(client);
 
 let ready = false;
 export const isReady = () => ready;
