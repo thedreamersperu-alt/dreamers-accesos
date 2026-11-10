@@ -15,6 +15,7 @@ import {
   Events, ContainerBuilder, TextDisplayBuilder, MediaGalleryBuilder, MediaGalleryItemBuilder,
   SeparatorBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, MessageFlags,
 } from 'discord.js';
+import crypto from 'node:crypto';
 import db from './db.js';
 
 const AUTHOR_ID = process.env.VIP_AUTHOR_ID || '';
@@ -26,7 +27,41 @@ const WINDOW_MS = (Number(process.env.TEASER_WINDOW_MIN) || 5) * 60_000;
 
 export const teaserEnabled = Boolean(AUTHOR_ID && CHANNEL_IDS.length && TARGET_ID);
 
-db.exec(`CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT)`);
+db.exec(`
+CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT);
+CREATE TABLE IF NOT EXISTS teaser_posts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT, posted_at INTEGER, channel_id TEXT, text TEXT
+);
+CREATE TABLE IF NOT EXISTS teaser_clicks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, post_id INTEGER, at INTEGER, visitor TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_teaser_clicks_post ON teaser_clicks(post_id);
+`);
+
+/* ---------- Clics del botón "Únete ahora" ---------- */
+// El botón pasa por /go/aviso/<id> en tu servidor: se cuenta el clic y se redirige a WhatsApp.
+const PUBLIC_URL = (process.env.TEASER_PUBLIC_URL
+  || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : '')).replace(/\/$/, '');
+const BOT_UA = /bot|crawler|spider|preview|discord|facebookexternalhit|whatsapp|slack|telegram/i;
+
+export function recordClick(postId, req) {
+  const ua = req.get('user-agent') || '';
+  if (BOT_UA.test(ua)) return JOIN_URL; // vistas previas automáticas no cuentan
+  const visitor = crypto.createHash('sha256').update(`${req.ip}|${ua}`).digest('hex').slice(0, 16);
+  db.prepare('INSERT INTO teaser_clicks (post_id, at, visitor) VALUES (?,?,?)').run(Number(postId) || 0, Date.now(), visitor);
+  return JOIN_URL;
+}
+
+export function clickStats() {
+  const posts = db.prepare(`
+    SELECT p.id, p.day, p.posted_at, p.channel_id, p.text,
+           COUNT(c.id) AS clicks, COUNT(DISTINCT c.visitor) AS uniques
+    FROM teaser_posts p LEFT JOIN teaser_clicks c ON c.post_id = p.id
+    GROUP BY p.id ORDER BY p.posted_at DESC LIMIT 120`).all();
+  const tot = db.prepare('SELECT COUNT(*) AS clicks, COUNT(DISTINCT visitor) AS uniques FROM teaser_clicks').get();
+  const week = db.prepare('SELECT COUNT(*) AS n FROM teaser_clicks WHERE at >= ?').get(Date.now() - 7 * 864e5).n;
+  return { posts, total: tot.clicks, uniques: tot.uniques, week, avisos: posts.length };
+}
 const kvGet = db.prepare('SELECT v FROM kv WHERE k=?');
 const kvSet = db.prepare('INSERT INTO kv (k,v) VALUES (?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v');
 
@@ -70,12 +105,15 @@ async function blurredImage(url) {
 
 /* ---------- Publicar ---------- */
 
-async function publish(client, { text, image, name }) {
+async function publish(client, { text, image, name, channel: p_channel }) {
   if (posting || postedToday()) return;
   posting = true;
   kvSet.run(DAY_KEY, today()); // se marca antes para no duplicar
   try {
     const file = new AttachmentBuilder(await blurredImage(image), { name: 'vip.jpg' });
+    const postId = db.prepare('INSERT INTO teaser_posts (day, posted_at, channel_id, text) VALUES (?,?,?,?)')
+      .run(today(), Date.now(), p_channel, text.slice(0, 300)).lastInsertRowid;
+    const buttonUrl = PUBLIC_URL ? `${PUBLIC_URL}/go/aviso/${postId}` : JOIN_URL;
     const box = new ContainerBuilder()
       .setAccentColor(0x1f6bff)
       .addTextDisplayComponents(new TextDisplayBuilder().setContent('### 🔴 Esto está pasando ahora en el VIP'))
@@ -84,7 +122,7 @@ async function publish(client, { text, image, name }) {
       .addSeparatorComponents(new SeparatorBuilder().setDivider(false))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent('**🔥 ¿No quieres perderte lo de hoy?**\nEntra al VIP y ve el análisis completo de Gregory.'));
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Únete ahora').setURL(JOIN_URL),
+      new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Únete ahora').setURL(buttonUrl),
     );
     const target = await client.channels.fetch(TARGET_ID);
     await target.send({
@@ -125,6 +163,7 @@ export function setupTeaser(client) {
     if (text) Object.assign(p, { text, textAt: now });
     if (img) Object.assign(p, { image: img.url, imageAt: now });
     p.name = name;
+    p.channel = msg.channelId;
     pending.set(msg.channelId, p);
 
     // ¿Hay texto e imagen, y están a menos de N minutos uno del otro?

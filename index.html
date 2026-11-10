@@ -159,6 +159,7 @@
     <button class="tab on" data-tab="give">Dar acceso</button>
     <button class="tab" data-tab="active">Accesos activos</button>
     <button class="tab" data-tab="history">Historial</button>
+    <button class="tab" data-tab="clicks">Clics aviso</button>
   </div>
 
   <!-- DAR ACCESO -->
@@ -227,6 +228,16 @@
       <tbody id="historyBody"></tbody>
     </table></div>
   </section>
+
+  <!-- CLICS DEL AVISO VIP -->
+  <section id="tab-clicks" class="hidden">
+    <div class="filters"><button class="btn" id="reloadClicks">Actualizar</button></div>
+    <div class="chips" id="clickStats"></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Aviso</th><th>Texto de Gregory</th><th>Clics</th><th>Personas</th></tr></thead>
+      <tbody id="clicksBody"></tbody>
+    </table></div>
+  </section>
 </div>
 
 <dialog id="dateDlg">
@@ -293,10 +304,29 @@ $('#logout').onclick = async () => { await api('/logout', { method: 'POST' }).ca
 /* ---------- Tabs ---------- */
 document.querySelectorAll('.tab').forEach((b) => b.onclick = () => {
   document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === b));
-  ['give', 'active', 'history'].forEach((t) => $('#tab-' + t).classList.toggle('hidden', t !== b.dataset.tab));
+  ['give', 'active', 'history', 'clicks'].forEach((t) => $('#tab-' + t).classList.toggle('hidden', t !== b.dataset.tab));
   if (b.dataset.tab === 'active') loadActive();
   if (b.dataset.tab === 'history') loadHistory();
+  if (b.dataset.tab === 'clicks') loadClicks();
 });
+
+/* ---------- Clics del aviso VIP ---------- */
+async function loadClicks() {
+  const d = await api('/clicks');
+  $('#clickStats').innerHTML = `<span class="chip">Clics totales <b>${d.total}</b></span>
+    <span class="chip">Últimos 7 días <b>${d.week}</b></span>
+    <span class="chip">Personas distintas <b>${d.uniques}</b></span>
+    <span class="chip">Avisos publicados <b>${d.avisos}</b></span>`;
+  $('#clicksBody').innerHTML = d.posts.length ? d.posts.map((p) => `<tr>
+    <td><b>${fmt(p.posted_at)}</b></td>
+    <td class="muted">${esc(p.text)}</td>
+    <td><b style="font-size:16px">${p.clicks}</b></td>
+    <td>${p.uniques}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="muted">Todavía no hay avisos con contador. Empieza a contar desde el próximo aviso.</td></tr>';
+}
+$('#reloadClicks').onclick = loadClicks;
+// Se actualiza solo cada minuto mientras la pestaña "Clics aviso" está abierta
+setInterval(() => { if (!$('#tab-clicks').classList.contains('hidden') && !$('#app').classList.contains('hidden')) loadClicks().catch(() => {}); }, 60_000);
 
 /* ---------- Alumnos ---------- */
 let searchT;

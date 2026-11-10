@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as db from './db.js';
 import * as bot from './bot.js';
+import { recordClick, clickStats } from './teaser.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -48,6 +49,13 @@ app.post('/api/logout', (req, res) => {
   sessions.delete(cookieOf(req, 'sid'));
   res.setHeader('Set-Cookie', 'sid=; Path=/; Max-Age=0');
   res.json({ ok: true });
+});
+
+/* ---------- Clic en "Únete ahora" del aviso VIP (público) ---------- */
+app.get('/go/aviso/:id', (req, res) => {
+  let url = process.env.TEASER_JOIN_URL || 'https://wa.link/kx9tzz';
+  try { url = recordClick(req.params.id, req); } catch (e) { console.error('[clic aviso]', e.message); }
+  res.redirect(302, url);
 });
 
 app.use('/api', (req, res, next) => {
@@ -108,6 +116,8 @@ app.delete('/api/grants/:id', wrap(async (req, res) => {
   await bot.closeGrant(g, 'revoked');
   res.json({ ok: true });
 }));
+
+app.get('/api/clicks', wrap((req, res) => res.json(clickStats())));
 
 app.get('/api/packs', wrap((req, res) => res.json(db.listPacks())));
 app.post('/api/packs', wrap((req, res) => {
